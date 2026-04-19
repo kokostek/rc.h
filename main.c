@@ -80,8 +80,8 @@ Expr *make_integer(int integer)
 Expr *make_pair(Expr *left, Expr *right)
 {
     Expr *expr = alloc_expr(EXPR_PAIR);
-    expr->pair.left  = rc_acquire(left);
-    expr->pair.right = rc_acquire(right);
+    expr->pair.left  = left;
+    expr->pair.right = right;
     return expr;
 }
 
@@ -148,7 +148,7 @@ Expr *eval(Expr *expr)
             assert(args->pair.left->kind == EXPR_PAIR);
             assert(args->pair.right->kind == EXPR_NIL);
             Expr *arg = args->pair.left;
-            return make_pair(arg->pair.right, arg->pair.left);
+            return make_pair(rc_acquire(arg->pair.right), rc_acquire(arg->pair.left));
         } else {
             TODO(temp_sprintf("Report unknown function error: %s", expr->pair.left->symbol));
         }
@@ -162,15 +162,15 @@ int main()
     printf("--- expr ---\n");
         // (swap . ((69 . 420) . nil))
         // (69 . 420)
-        Expr *expr = rc_acquire(make_list(
+        Expr *expr = make_list(
             make_symbol("swap"),
             make_pair(
                 make_integer(69),
-                make_integer(420))));
+                make_integer(420)));
         printf("expr =\n");
         dump_expr_opt(expr, 1);
     printf("--- eval ---\n");
-        Expr *result = rc_acquire(eval(expr));
+        Expr *result = eval(expr);
         printf("expr =\n");
         dump_expr_opt(expr, 1);
         printf("result =\n");

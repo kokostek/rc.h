@@ -4,14 +4,14 @@
 #include <stddef.h>
 
 typedef struct {
-    ptrdiff_t count;
+    size_t count;
     void (*destroy)(void *data);
 } Rc;
 
 void *rc_alloc(size_t size, void (*destroy)(void *data));
 void *rc_acquire(void *data);
 void rc_release(void *data);
-ptrdiff_t rc_count(void *data);
+size_t rc_count(void *data);
 
 #endif // RC_H_
 
@@ -21,7 +21,7 @@ void *rc_alloc(size_t size, void (*destroy)(void *data))
 {
     Rc *rc = malloc(sizeof(Rc) + size);
     assert(rc);
-    rc->count = 0;
+    rc->count = 1;
     rc->destroy = destroy;
     printf("[RC] %p allocated\n", rc);
     return rc + 1;
@@ -39,14 +39,14 @@ void rc_release(void *data)
 {
     Rc *rc = (Rc*)data - 1;
     rc->count -= 1;
-    if (rc->count <= 0) {
+    if (rc->count == 0) {
         rc->destroy(rc + 1);
         free(rc);
         printf("[RC] %p released\n", rc);
     }
 }
 
-ptrdiff_t rc_count(void *data)
+size_t rc_count(void *data)
 {
     Rc *rc = (Rc*)data - 1;
     return rc->count;
